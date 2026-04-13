@@ -1,0 +1,88 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  width: 100%;
+  font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+}
+
+#app {
+  height: 100%;
+  width: 100%;
+}
+
+// 卡片样式
+.page-card {
+  background: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+}
+
+.page-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #303133;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+
+  .el-icon {
+    margin-right: 8px;
+    color: #409eff;
+  }
+}
+
+// 表格样式优化
+.el-table {
+  .el-table__header-wrapper {
+    th {
+      background-color: #f5f7fa !important;
+    }
+  }
+}
+
+// 搜索栏样式
+.search-bar {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+// 统计卡片
+.stat-card {
+  background: linear-gradient(135deg, #409eff 0%, #66b1ff 100%);
+  border-radius: 8px;
+  padding: 20px;
+  color: #fff;
+
+  .stat-title {
+    font-size: 14px;
+    opacity: 0.9;
+  }
+
+  .stat-value {
+    font-size: 28px;
+    font-weight: bold;
+    margin-top: 10px;
+  }
+}
+
+// 涨跌颜色
+.up {
+  color: #f56c6c !important;
+}
+
+.down {
+  color: #67c23a !important;
+}
+
+.flat {
+  color: #909399 !important;
+}
