@@ -158,6 +158,6 @@ onMounted(() => {
 
 <style lang="scss" scoped>
 .etf-view {
-  // 样式
+  height: 100%;
 }
 </style>

@@ -203,6 +203,6 @@ onMounted(() => {
 
 <style lang="scss" scoped>
 .fund-flow-view {
-  // 样式
+  height: 100%;
 }
 </style>

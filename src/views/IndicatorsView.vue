@@ -200,6 +200,6 @@ onMounted(() => {
 
 <style lang="scss" scoped>
 .indicators-view {
-  // 样式
+  height: 100%;
 }
 </style>

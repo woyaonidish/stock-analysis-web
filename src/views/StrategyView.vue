@@ -202,6 +202,6 @@ onMounted(() => {
 
 <style lang="scss" scoped>
 .strategy-view {
-  // 样式
+  height: 100%;
 }
 </style>
