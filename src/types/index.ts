@@ -51,6 +51,21 @@ export interface StockHist {
   amount: number
 }
 
+// 缓存历史数据（含更多字段）
+export interface CachedHist {
+  date: string
+  open: number
+  close: number
+  high: number
+  low: number
+  volume: number
+  amount: number
+  amplitude?: number    // 振幅
+  quote_change?: number  // 涨跌幅
+  ups_downs?: number     // 涨跌额
+  turnover?: number      // 换手率
+}
+
 // 分时数据
 export interface StockMinData {
   time: string
@@ -162,4 +177,22 @@ export interface BacktestRequest {
   start_date: string
   end_date: string
   initial_capital?: number
+}
+
+// 关注股票数据
+export interface AttentionStock {
+  code: string
+  name: string
+  date: string
+  close_price: number
+  change_rate: number
+  volume: number
+  amount: number
+}
+
+// 缓存状态
+export interface CacheStatus {
+  code: string
+  cache_count: number
+  latest_date: string
 }

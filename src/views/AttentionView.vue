@@ -1,7 +1,18 @@
 <template>
-  <div class="index-view">
+  <div class="attention-view">
     <!-- 顶部概览卡片 -->
     <el-row :gutter="16" class="overview-cards">
+      <el-col :span="3">
+        <el-card shadow="hover" class="stat-card">
+          <div class="stat-icon">
+            <el-icon><Star /></el-icon>
+          </div>
+          <div class="stat-content">
+            <div class="stat-value">{{ attentionList.length }}</div>
+            <div class="stat-label">关注总数</div>
+          </div>
+        </el-card>
+      </el-col>
       <el-col :span="3">
         <el-card shadow="hover" class="stat-card">
           <div class="stat-icon up">
@@ -9,7 +20,7 @@
           </div>
           <div class="stat-content">
             <div class="stat-value">{{ upCount }}</div>
-            <div class="stat-label">上涨指数</div>
+            <div class="stat-label">上涨股票</div>
           </div>
         </el-card>
       </el-col>
@@ -20,18 +31,7 @@
           </div>
           <div class="stat-content">
             <div class="stat-value">{{ downCount }}</div>
-            <div class="stat-label">下跌指数</div>
-          </div>
-        </el-card>
-      </el-col>
-      <el-col :span="3">
-        <el-card shadow="hover" class="stat-card">
-          <div class="stat-icon flat">
-            <el-icon><Minus /></el-icon>
-          </div>
-          <div class="stat-content">
-            <div class="stat-value">{{ flatCount }}</div>
-            <div class="stat-label">平盘指数</div>
+            <div class="stat-label">下跌股票</div>
           </div>
         </el-card>
       </el-col>
@@ -48,24 +48,24 @@
       <el-col :span="3">
         <el-card shadow="hover" class="stat-card">
           <div class="stat-content">
+            <div class="stat-value up">{{ maxUpRate.toFixed(2) }}%</div>
+            <div class="stat-label">最大涨幅</div>
+          </div>
+        </el-card>
+      </el-col>
+      <el-col :span="3">
+        <el-card shadow="hover" class="stat-card">
+          <div class="stat-content">
+            <div class="stat-value down">{{ maxDownRate.toFixed(2) }}%</div>
+            <div class="stat-label">最大跌幅</div>
+          </div>
+        </el-card>
+      </el-col>
+      <el-col :span="3">
+        <el-card shadow="hover" class="stat-card">
+          <div class="stat-content">
             <div class="stat-value">{{ formatAmount(totalAmount) }}</div>
             <div class="stat-label">总成交额</div>
-          </div>
-        </el-card>
-      </el-col>
-      <el-col :span="3">
-        <el-card shadow="hover" class="stat-card">
-          <div class="stat-content">
-            <div class="stat-value">{{ maxUpIndex?.name || '--' }}</div>
-            <div class="stat-label up">涨幅最大</div>
-          </div>
-        </el-card>
-      </el-col>
-      <el-col :span="3">
-        <el-card shadow="hover" class="stat-card">
-          <div class="stat-content">
-            <div class="stat-value">{{ maxDownIndex?.name || '--' }}</div>
-            <div class="stat-label down">跌幅最大</div>
           </div>
         </el-card>
       </el-col>
@@ -73,11 +73,11 @@
 
     <div class="page-card">
       <div class="page-title">
-        <el-icon><Promotion /></el-icon>
-        指数行情
+        <el-icon><Star /></el-icon>
+        关注股票
       </div>
 
-      <!-- 搜索栏 -->
+      <!-- 操作栏 -->
       <div class="search-bar">
         <el-date-picker
           v-model="tradeDate"
@@ -87,19 +87,19 @@
           value-format="YYYY-MM-DD"
           :clearable="true"
         />
-        <el-button type="primary" @click="loadIndexList">
+        <el-button type="primary" @click="loadAttentionList">
           <el-icon><Search /></el-icon>
           查询
         </el-button>
-        <el-button type="warning" @click="handleFetchData">
-          <el-icon><Download /></el-icon>
-          抓取数据
+        <el-button type="danger" @click="handleClearAll">
+          <el-icon><Delete /></el-icon>
+          清空关注
         </el-button>
       </div>
 
       <!-- 图表区域 -->
       <el-row :gutter="16" style="margin-bottom: 20px">
-        <el-col :span="8">
+        <el-col :span="6">
           <el-card shadow="hover">
             <template #header>
               <div class="chart-header">
@@ -107,21 +107,21 @@
                 涨跌分布
               </div>
             </template>
-            <div ref="pieChartRef" style="height: 250px"></div>
+            <div ref="pieChartRef" style="height: 200px"></div>
           </el-card>
         </el-col>
-        <el-col :span="8">
+        <el-col :span="6">
           <el-card shadow="hover">
             <template #header>
               <div class="chart-header">
                 <el-icon><BarChart /></el-icon>
-                指数涨跌幅对比
+                涨跌幅对比
               </div>
             </template>
-            <div ref="barChartRef" style="height: 250px"></div>
+            <div ref="barChartRef" style="height: 200px"></div>
           </el-card>
         </el-col>
-        <el-col :span="8">
+        <el-col :span="6">
           <el-card shadow="hover">
             <template #header>
               <div class="chart-header">
@@ -129,16 +129,27 @@
                 成交额对比
               </div>
             </template>
-            <div ref="amountChartRef" style="height: 250px"></div>
+            <div ref="amountChartRef" style="height: 200px"></div>
+          </el-card>
+        </el-col>
+        <el-col :span="6">
+          <el-card shadow="hover">
+            <template #header>
+              <div class="chart-header">
+                <el-icon><TrendCharts /></el-icon>
+                涨幅TOP5
+              </div>
+            </template>
+            <div ref="topChartRef" style="height: 200px"></div>
           </el-card>
         </el-col>
       </el-row>
 
-      <!-- 指数列表 -->
-      <el-table :data="indexList" v-loading="loading" stripe>
+      <!-- 关注列表 -->
+      <el-table :data="attentionList" v-loading="loading" stripe height="calc(100vh - 420px)">
         <el-table-column prop="code" label="代码" width="100" />
         <el-table-column prop="name" label="名称" width="150" />
-        <el-table-column prop="close_price" label="最新价" width="120">
+        <el-table-column prop="close_price" label="现价" width="100">
           <template #default="{ row }">
             <span :class="getChangeClass(row.change_rate)">
               {{ row.close_price.toFixed(2) }}
@@ -152,63 +163,70 @@
             </span>
           </template>
         </el-table-column>
-        <el-table-column prop="open_price" label="开盘" width="120">
-          <template #default="{ row }">{{ row.open_price.toFixed(2) }}</template>
-        </el-table-column>
-        <el-table-column prop="high_price" label="最高" width="120">
-          <template #default="{ row }">{{ row.high_price.toFixed(2) }}</template>
-        </el-table-column>
-        <el-table-column prop="low_price" label="最低" width="120">
-          <template #default="{ row }">{{ row.low_price.toFixed(2) }}</template>
-        </el-table-column>
-        <el-table-column prop="pre_close" label="昨收" width="120">
-          <template #default="{ row }">{{ row.pre_close.toFixed(2) }}</template>
-        </el-table-column>
         <el-table-column prop="volume" label="成交量" width="120">
-          <template #default="{ row }">{{ formatVolume(row.volume) }}</template>
+          <template #default="{ row }">
+            {{ formatVolume(row.volume) }}
+          </template>
         </el-table-column>
         <el-table-column prop="amount" label="成交额" width="140">
-          <template #default="{ row }">{{ formatAmount(row.amount) }}</template>
+          <template #default="{ row }">
+            {{ formatAmount(row.amount) }}
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="150" fixed="right">
+          <template #default="{ row }">
+            <el-button type="primary" link @click="goToDetail(row.code)">
+              详情
+            </el-button>
+            <el-button type="danger" link @click="handleRemove(row.code)">
+              取消关注
+            </el-button>
+          </template>
         </el-table-column>
       </el-table>
+
+      <el-empty v-if="!loading && attentionList.length === 0" description="暂无关注股票，请在股票列表中添加关注" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { ElMessage } from 'element-plus'
+import { useRouter } from 'vue-router'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import * as echarts from 'echarts'
-import { getIndexList, fetchIndexData } from '@/api'
-import type { Index } from '@/types'
+import { getAttentionList, removeAttention, clearAttention } from '@/api'
+import type { AttentionStock } from '@/types'
 
-const indexList = ref<Index[]>([])
+const router = useRouter()
+const attentionList = ref<AttentionStock[]>([])
 const loading = ref(false)
 const tradeDate = ref<string>('')
 
 const pieChartRef = ref<HTMLElement | null>(null)
 const barChartRef = ref<HTMLElement | null>(null)
 const amountChartRef = ref<HTMLElement | null>(null)
+const topChartRef = ref<HTMLElement | null>(null)
 let pieChart: echarts.ECharts | null = null
 let barChart: echarts.ECharts | null = null
 let amountChart: echarts.ECharts | null = null
+let topChart: echarts.ECharts | null = null
 
-// 统计计算
-const upCount = computed(() => indexList.value.filter(i => i.change_rate > 0).length)
-const downCount = computed(() => indexList.value.filter(i => i.change_rate < 0).length)
-const flatCount = computed(() => indexList.value.filter(i => i.change_rate === 0).length)
+const upCount = computed(() => attentionList.value.filter(s => s.change_rate > 0).length)
+const downCount = computed(() => attentionList.value.filter(s => s.change_rate < 0).length)
+const flatCount = computed(() => attentionList.value.filter(s => s.change_rate === 0).length)
 const avgChangeRate = computed(() => {
-  if (indexList.value.length === 0) return 0
-  return indexList.value.reduce((sum, i) => sum + i.change_rate, 0) / indexList.value.length
+  if (attentionList.value.length === 0) return 0
+  return attentionList.value.reduce((sum, s) => sum + s.change_rate, 0) / attentionList.value.length
 })
-const totalAmount = computed(() => indexList.value.reduce((sum, i) => sum + i.amount, 0))
-const maxUpIndex = computed(() => {
-  if (indexList.value.length === 0) return null
-  return indexList.value.reduce((max, i) => i.change_rate > (max?.change_rate || -999) ? i : max, indexList.value[0])
+const totalAmount = computed(() => attentionList.value.reduce((sum, s) => sum + s.amount, 0))
+const maxUpRate = computed(() => {
+  if (attentionList.value.length === 0) return 0
+  return Math.max(...attentionList.value.map(s => s.change_rate))
 })
-const maxDownIndex = computed(() => {
-  if (indexList.value.length === 0) return null
-  return indexList.value.reduce((min, i) => i.change_rate < (min?.change_rate || 999) ? i : min, indexList.value[0])
+const maxDownRate = computed(() => {
+  if (attentionList.value.length === 0) return 0
+  return Math.min(...attentionList.value.map(s => s.change_rate))
 })
 
 const getChangeClass = (rate: number) => {
@@ -234,6 +252,7 @@ const renderCharts = () => {
   renderPieChart()
   renderBarChart()
   renderAmountChart()
+  renderTopChart()
 }
 
 const renderPieChart = () => {
@@ -242,15 +261,13 @@ const renderPieChart = () => {
   
   pieChart.setOption({
     tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
-    legend: { bottom: 0 },
+    legend: { bottom: 0, itemWidth: 10, itemHeight: 10 },
     series: [{
       type: 'pie',
-      radius: ['40%', '70%'],
+      radius: ['35%', '60%'],
       avoidLabelOverlap: false,
-      itemStyle: { borderRadius: 10, borderColor: '#fff', borderWidth: 2 },
+      itemStyle: { borderRadius: 6, borderColor: '#fff', borderWidth: 2 },
       label: { show: false },
-      emphasis: { label: { show: true, fontSize: 14, fontWeight: 'bold' } },
-      labelLine: { show: false },
       data: [
         { value: upCount.value, name: '上涨', itemStyle: { color: '#f56c6c' } },
         { value: downCount.value, name: '下跌', itemStyle: { color: '#67c23a' } },
@@ -264,22 +281,21 @@ const renderBarChart = () => {
   if (!barChartRef.value) return
   if (!barChart) barChart = echarts.init(barChartRef.value)
   
-  const names = indexList.value.map(i => i.name)
-  const rates = indexList.value.map(i => i.change_rate)
+  const names = attentionList.value.map(s => s.name)
+  const rates = attentionList.value.map(s => s.change_rate)
   
   barChart.setOption({
     tooltip: { trigger: 'axis', formatter: '{b}: {c}%' },
-    grid: { left: '3%', right: '4%', bottom: '15%', top: '10%', containLabel: true },
-    xAxis: { type: 'category', data: names, axisLabel: { interval: 0, rotate: 30, fontSize: 10 } },
-    yAxis: { type: 'value', axisLabel: { formatter: '{value}%' } },
+    grid: { left: '3%', right: '4%', bottom: '20%', top: '10%', containLabel: true },
+    xAxis: { type: 'category', data: names, axisLabel: { fontSize: 9, interval: 0, rotate: 20 } },
+    yAxis: { type: 'value', axisLabel: { formatter: '{value}%', fontSize: 10 } },
     series: [{
       type: 'bar',
       data: rates.map(r => ({
         value: r,
         itemStyle: { color: r >= 0 ? '#f56c6c' : '#67c23a' }
       })),
-      barWidth: '50%',
-      label: { show: true, position: 'top', formatter: '{c}%', fontSize: 10 }
+      barWidth: '50%'
     }]
   })
 }
@@ -288,20 +304,44 @@ const renderAmountChart = () => {
   if (!amountChartRef.value) return
   if (!amountChart) amountChart = echarts.init(amountChartRef.value)
   
-  const names = indexList.value.map(i => i.name)
-  const amounts = indexList.value.map(i => i.amount / 100000000)
+  const names = attentionList.value.map(s => s.name)
+  const amounts = attentionList.value.map(s => s.amount / 100000000)
   
   amountChart.setOption({
     tooltip: { trigger: 'axis', formatter: '{b}: {c}亿' },
-    grid: { left: '3%', right: '4%', bottom: '15%', top: '10%', containLabel: true },
-    xAxis: { type: 'category', data: names, axisLabel: { interval: 0, rotate: 30, fontSize: 10 } },
-    yAxis: { type: 'value', axisLabel: { formatter: '{value}亿' } },
+    grid: { left: '3%', right: '4%', bottom: '20%', top: '10%', containLabel: true },
+    xAxis: { type: 'category', data: names, axisLabel: { fontSize: 9, interval: 0, rotate: 20 } },
+    yAxis: { type: 'value', axisLabel: { formatter: '{value}亿', fontSize: 10 } },
     series: [{
       type: 'bar',
       data: amounts,
       barWidth: '50%',
-      itemStyle: { color: '#409eff', borderRadius: [4, 4, 0, 0] },
-      label: { show: true, position: 'top', formatter: '{c}亿', fontSize: 10 }
+      itemStyle: { color: '#409eff', borderRadius: [4, 4, 0, 0] }
+    }]
+  })
+}
+
+const renderTopChart = () => {
+  if (!topChartRef.value) return
+  if (!topChart) topChart = echarts.init(topChartRef.value)
+  
+  const top5 = [...attentionList.value].sort((a, b) => b.change_rate - a.change_rate).slice(0, 5)
+  const names = top5.map(s => s.name)
+  const rates = top5.map(s => s.change_rate)
+  
+  topChart.setOption({
+    tooltip: { trigger: 'axis', formatter: '{b}: {c}%' },
+    grid: { left: '3%', right: '4%', bottom: '15%', top: '10%', containLabel: true },
+    xAxis: { type: 'category', data: names, axisLabel: { fontSize: 10, interval: 0 } },
+    yAxis: { type: 'value', axisLabel: { formatter: '{value}%', fontSize: 10 } },
+    series: [{
+      type: 'bar',
+      data: rates.map(r => ({
+        value: r,
+        itemStyle: { color: '#f56c6c' }
+      })),
+      barWidth: '40%',
+      label: { show: true, position: 'top', formatter: '{c}%', fontSize: 10 }
     }]
   })
 }
@@ -310,46 +350,65 @@ const handleResize = () => {
   pieChart?.resize()
   barChart?.resize()
   amountChart?.resize()
+  topChart?.resize()
 }
 
-const loadIndexList = async () => {
+const loadAttentionList = async () => {
   loading.value = true
   try {
-    const res = await getIndexList(tradeDate.value)
+    const res = await getAttentionList(tradeDate.value)
     if (res.code === 0) {
-      indexList.value = res.data
+      attentionList.value = res.data
       renderCharts()
     } else {
       ElMessage.error(res.message)
     }
   } catch (error) {
-    ElMessage.error('加载指数数据失败')
+    ElMessage.error('加载关注列表失败')
   } finally {
     loading.value = false
   }
 }
 
-const handleFetchData = async () => {
-  loading.value = true
+const handleRemove = async (code: string) => {
   try {
-    const res = await fetchIndexData(tradeDate.value)
+    await ElMessageBox.confirm('确认取消关注该股票?', '提示', { type: 'warning' })
+    const res = await removeAttention(code)
     if (res.code === 0) {
-      ElMessage.success(`成功抓取 ${res.data.count} 条数据`)
-      loadIndexList()
+      ElMessage.success('已取消关注')
+      loadAttentionList()
     } else {
       ElMessage.error(res.message)
     }
-  } catch (error) {
-    ElMessage.error('抓取数据失败')
-  } finally {
-    loading.value = false
+  } catch (e) {
+    // 用户取消
   }
 }
 
-watch(indexList, renderCharts)
+const handleClearAll = async () => {
+  try {
+    await ElMessageBox.confirm('确认清空所有关注股票?', '提示', { type: 'warning' })
+    const res = await clearAttention()
+    if (res.code === 0) {
+      ElMessage.success(`已清空 ${res.data.count} 只关注股票`)
+      attentionList.value = []
+      renderCharts()
+    } else {
+      ElMessage.error(res.message)
+    }
+  } catch (e) {
+    // 用户取消
+  }
+}
+
+const goToDetail = (code: string) => {
+  router.push(`/stocks/${code}`)
+}
+
+watch(attentionList, renderCharts)
 
 onMounted(() => {
-  loadIndexList()
+  loadAttentionList()
   window.addEventListener('resize', handleResize)
 })
 
@@ -358,11 +417,12 @@ onUnmounted(() => {
   pieChart?.dispose()
   barChart?.dispose()
   amountChart?.dispose()
+  topChart?.dispose()
 })
 </script>
 
 <style lang="scss" scoped>
-.index-view {
+.attention-view {
   height: 100%;
 }
 
@@ -377,10 +437,10 @@ onUnmounted(() => {
   .stat-icon {
     font-size: 24px;
     margin-bottom: 8px;
+    color: #409eff;
 
     &.up { color: #f56c6c; }
     &.down { color: #67c23a; }
-    &.flat { color: #909399; }
   }
 
   .stat-content {
@@ -397,9 +457,6 @@ onUnmounted(() => {
       font-size: 12px;
       color: #909399;
       margin-top: 4px;
-
-      &.up { color: #f56c6c; }
-      &.down { color: #67c23a; }
     }
   }
 

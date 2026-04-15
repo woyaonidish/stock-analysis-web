@@ -1,5 +1,5 @@
 import axios from 'axios'
-import type { ApiResponse, Stock, StockHist, StockMinData, Index, Financial, Pattern, PatternSignal, Indicator, StrategyType, StrategyResult, BacktestResult, BacktestRequest } from '@/types'
+import type { ApiResponse, Stock, StockHist, StockMinData, CachedHist, Index, Financial, Pattern, PatternSignal, Indicator, StrategyType, StrategyResult, BacktestResult, BacktestRequest, AttentionStock, CacheStatus } from '@/types'
 
 const api = axios.create({
   baseURL: '/api',
@@ -181,6 +181,68 @@ export const runBacktest = (params: BacktestRequest): Promise<ApiResponse<Backte
 // 运行所有策略回测
 export const runAllBacktests = (params: { start_date: string; end_date: string }): Promise<ApiResponse<Record<string, BacktestResult>>> => {
   return api.post('/backtest/run-all', null, { params })
+}
+
+// ==================== 关注股票接口 ====================
+
+// 获取关注股票列表
+export const getAttentionList = (tradeDate?: string): Promise<ApiResponse<AttentionStock[]>> => {
+  return api.get('/attention/list', { params: { trade_date: tradeDate } })
+}
+
+// 获取关注股票代码
+export const getAttentionCodes = (): Promise<ApiResponse<string[]>> => {
+  return api.get('/attention/codes')
+}
+
+// 检查是否关注
+export const checkAttention = (code: string): Promise<ApiResponse<{ code: string; is_attention: boolean }>> => {
+  return api.get(`/attention/check/${code}`)
+}
+
+// 添加关注
+export const addAttention = (code: string): Promise<ApiResponse<{ code: string }>> => {
+  return api.post(`/attention/add/${code}`)
+}
+
+// 取消关注
+export const removeAttention = (code: string): Promise<ApiResponse<{ code: string }>> => {
+  return api.delete(`/attention/remove/${code}`)
+}
+
+// 清空关注列表
+export const clearAttention = (): Promise<ApiResponse<{ count: number }>> => {
+  return api.delete('/attention/clear')
+}
+
+// ==================== 历史数据缓存接口 ====================
+
+// 获取缓存历史数据
+export const getCachedHist = (code: string, params?: {
+  start_date?: string
+  end_date?: string
+}): Promise<ApiResponse<CachedHist[]>> => {
+  return api.get(`/hist/cache/${code}`, { params })
+}
+
+// 获取缓存状态
+export const getCacheStatus = (code: string): Promise<ApiResponse<CacheStatus>> => {
+  return api.get(`/hist/status/${code}`)
+}
+
+// 获取并缓存历史数据
+export const fetchAndCacheHist = (code: string, days?: number): Promise<ApiResponse<{ code: string; count: number }>> => {
+  return api.post(`/hist/fetch/${code}`, null, { params: { days } })
+}
+
+// 批量获取并缓存历史数据
+export const fetchBatchHist = (params?: { days?: number; codes?: string }): Promise<ApiResponse<{ total_count: number; success_count: number; processed: number }>> => {
+  return api.post('/hist/fetch-batch', null, { params })
+}
+
+// 清除缓存
+export const clearHistCache = (code: string): Promise<ApiResponse<{ code: string; count: number }>> => {
+  return api.delete(`/hist/clear/${code}`)
 }
 
 export default api

@@ -18,6 +18,10 @@
             <el-icon><DataLine /></el-icon>
             <span>股票数据</span>
           </el-menu-item>
+          <el-menu-item index="/attention">
+            <el-icon><Star /></el-icon>
+            <span>关注股票</span>
+          </el-menu-item>
           <el-menu-item index="/index">
             <el-icon><Promotion /></el-icon>
             <span>指数行情</span>

@@ -7,6 +7,14 @@
         <el-button type="primary" link @click="goBack" style="margin-left: 20px">
           返回列表
         </el-button>
+        <el-button 
+          :type="isAttention ? 'warning' : 'success'" 
+          @click="handleAttention"
+          style="margin-left: 10px"
+        >
+          <el-icon><Star /></el-icon>
+          {{ isAttention ? '取消关注' : '添加关注' }}
+        </el-button>
       </div>
 
       <!-- 基本信息 -->
@@ -121,26 +129,50 @@
     <div class="page-card">
       <div class="page-title">
         <el-icon><List /></el-icon>
-        历史数据
+        历史数据（含振幅、涨跌额、换手率）
       </div>
       <el-table :data="histData" stripe max-height="400">
         <el-table-column prop="date" label="日期" width="120" />
-        <el-table-column prop="open" label="开盘" width="100">
+        <el-table-column prop="open" label="开盘" width="80">
           <template #default="{ row }">{{ row.open.toFixed(2) }}</template>
         </el-table-column>
-        <el-table-column prop="close" label="收盘" width="100">
-          <template #default="{ row }">{{ row.close.toFixed(2) }}</template>
+        <el-table-column prop="close" label="收盘" width="80">
+          <template #default="{ row }">
+            <span :class="getChangeClass(row.quote_change || 0)">
+              {{ row.close.toFixed(2) }}
+            </span>
+          </template>
         </el-table-column>
-        <el-table-column prop="high" label="最高" width="100">
+        <el-table-column prop="high" label="最高" width="80">
           <template #default="{ row }">{{ row.high.toFixed(2) }}</template>
         </el-table-column>
-        <el-table-column prop="low" label="最低" width="100">
+        <el-table-column prop="low" label="最低" width="80">
           <template #default="{ row }">{{ row.low.toFixed(2) }}</template>
         </el-table-column>
-        <el-table-column prop="volume" label="成交量" width="120">
+        <el-table-column label="涨跌幅(%)" width="90">
+          <template #default="{ row }">
+            <span :class="getChangeClass(row.quote_change || 0)">
+              {{ (row.quote_change || 0).toFixed(2) }}%
+            </span>
+          </template>
+        </el-table-column>
+        <el-table-column label="涨跌额" width="80">
+          <template #default="{ row }">
+            <span :class="getChangeClass(row.quote_change || 0)">
+              {{ (row.ups_downs || 0).toFixed(2) }}
+            </span>
+          </template>
+        </el-table-column>
+        <el-table-column label="振幅(%)" width="80">
+          <template #default="{ row }">{{ (row.amplitude || 0).toFixed(2) }}</template>
+        </el-table-column>
+        <el-table-column label="换手率(%)" width="80">
+          <template #default="{ row }">{{ (row.turnover || 0).toFixed(2) }}</template>
+        </el-table-column>
+        <el-table-column prop="volume" label="成交量" width="100">
           <template #default="{ row }">{{ formatVolume(row.volume) }}</template>
         </el-table-column>
-        <el-table-column prop="amount" label="成交额" width="140">
+        <el-table-column prop="amount" label="成交额" width="100">
           <template #default="{ row }">{{ formatAmount(row.amount) }}</template>
         </el-table-column>
       </el-table>
@@ -153,17 +185,18 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import * as echarts from 'echarts'
-import { getStockDetail, getStockHist } from '@/api'
-import type { Stock, StockHist } from '@/types'
+import { getStockDetail, getCachedHist, checkAttention, addAttention, removeAttention } from '@/api'
+import type { Stock, CachedHist } from '@/types'
 
 const router = useRouter()
 const route = useRoute()
 const code = route.params.code as string
 
 const stock = ref<Stock | null>(null)
-const histData = ref<StockHist[]>([])
+const histData = ref<CachedHist[]>([])
 const period = ref('daily')
 const chartRef = ref<HTMLElement | null>(null)
+const isAttention = ref(false)
 let chartInstance: echarts.ECharts | null = null
 
 // 计算涨跌幅
@@ -217,6 +250,31 @@ const formatAmount = (val: number) => {
   return val.toFixed(2)
 }
 
+// 关注/取消关注
+const handleAttention = async () => {
+  try {
+    if (isAttention.value) {
+      const res = await removeAttention(code)
+      if (res.code === 0) {
+        ElMessage.success('已取消关注')
+        isAttention.value = false
+      } else {
+        ElMessage.error(res.message)
+      }
+    } else {
+      const res = await addAttention(code)
+      if (res.code === 0) {
+        ElMessage.success('已添加关注')
+        isAttention.value = true
+      } else {
+        ElMessage.error(res.message)
+      }
+    }
+  } catch (error) {
+    ElMessage.error('操作失败')
+  }
+}
+
 // 加载股票详情
 const loadStockDetail = async () => {
   try {
@@ -231,17 +289,29 @@ const loadStockDetail = async () => {
   }
 }
 
-// 加载历史数据
+// 检查关注状态
+const checkAttentionStatus = async () => {
+  try {
+    const res = await checkAttention(code)
+    if (res.code === 0) {
+      isAttention.value = res.data.is_attention
+    }
+  } catch (error) {
+    // 忽略错误
+  }
+}
+
+// 加载历史数据（使用缓存接口）
 const loadHistData = async () => {
   try {
     const endDate = new Date()
     const startDate = new Date()
     startDate.setDate(startDate.getDate() - 120)
     
-    const res = await getStockHist(code, {
-      start_date: formatDate(startDate, 'YYYYMMDD'),
-      end_date: formatDate(endDate, 'YYYYMMDD'),
-      period: period.value
+    // 使用缓存历史数据接口，获取更多字段
+    const res = await getCachedHist(code, {
+      start_date: formatDate(startDate, 'YYYY-MM-DD'),
+      end_date: formatDate(endDate, 'YYYY-MM-DD')
     })
     
     if (res.code === 0) {
@@ -338,6 +408,7 @@ watch(histData, () => {
 
 onMounted(() => {
   loadStockDetail()
+  checkAttentionStatus()
   loadHistData()
   window.addEventListener('resize', handleResize)
 })

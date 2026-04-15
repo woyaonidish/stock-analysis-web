@@ -16,6 +16,11 @@ const routes = [
     component: () => import('@/views/StockDetailView.vue')
   },
   {
+    path: '/attention',
+    name: 'Attention',
+    component: () => import('@/views/AttentionView.vue')
+  },
+  {
     path: '/index',
     name: 'Index',
     component: () => import('@/views/IndexView.vue')
