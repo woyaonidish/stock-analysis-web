@@ -72,53 +72,59 @@
       >
         <el-table-column prop="code" label="代码" width="100" fixed />
         <el-table-column prop="name" label="名称" width="120" />
-        <el-table-column prop="new_price" label="最新价" width="100">
+        <el-table-column prop="close_price" label="现价" width="90">
           <template #default="{ row }">
-            <span :class="getChangeClass(row.change_rate)">
-              {{ formatPrice(row.new_price) }}
+            <span :class="getChangeClass(calcChangeRate(row))">
+              {{ formatPrice(row.close_price) }}
             </span>
           </template>
         </el-table-column>
-        <el-table-column prop="change_rate" label="涨跌幅(%)" width="100">
+        <el-table-column label="涨跌幅(%)" width="90">
           <template #default="{ row }">
-            <span :class="getChangeClass(row.change_rate)">
-              {{ formatChangeRate(row.change_rate) }}%
+            <span :class="getChangeClass(calcChangeRate(row))">
+              {{ calcChangeRate(row).toFixed(2) }}%
             </span>
           </template>
         </el-table-column>
-        <el-table-column prop="change_amount" label="涨跌额" width="100">
-          <template #default="{ row }">
-            <span :class="getChangeClass(row.change_rate)">
-              {{ formatPrice(row.change_amount) }}
-            </span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="volume" label="成交量" width="120">
-          <template #default="{ row }">
-            {{ formatVolume(row.volume) }}
-          </template>
-        </el-table-column>
-        <el-table-column prop="amount" label="成交额" width="140">
-          <template #default="{ row }">
-            {{ formatAmount(row.amount) }}
-          </template>
-        </el-table-column>
-        <el-table-column prop="open_price" label="开盘价" width="90">
+        <el-table-column prop="open_price" label="开盘" width="90">
           <template #default="{ row }">
             {{ formatPrice(row.open_price) }}
           </template>
         </el-table-column>
-        <el-table-column prop="high_price" label="最高价" width="90">
+        <el-table-column prop="high_price" label="最高" width="90">
           <template #default="{ row }">
             {{ formatPrice(row.high_price) }}
           </template>
         </el-table-column>
-        <el-table-column prop="low_price" label="最低价" width="90">
+        <el-table-column prop="low_price" label="最低" width="90">
           <template #default="{ row }">
             {{ formatPrice(row.low_price) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="100" fixed="right">
+        <el-table-column prop="volume" label="成交量" width="100">
+          <template #default="{ row }">
+            {{ formatVolume(row.volume) }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="amount" label="成交额" width="100">
+          <template #default="{ row }">
+            {{ formatAmount(row.amount) }}
+          </template>
+        </el-table-column>
+        <!-- 五档买卖盘 -->
+        <el-table-column label="买一" width="120">
+          <template #default="{ row }">
+            <span v-if="row.bid1">{{ formatPrice(row.bid1) }}/{{ row.bid1_vol }}</span>
+            <span v-else>--</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="卖一" width="120">
+          <template #default="{ row }">
+            <span v-if="row.ask1">{{ formatPrice(row.ask1) }}/{{ row.ask1_vol }}</span>
+            <span v-else>--</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="80" fixed="right">
           <template #default="{ row }">
             <el-button type="primary" link @click.stop="goToDetail(row.code)">
               详情
@@ -143,13 +149,18 @@ const loading = ref(false)
 const tradeDate = ref<string>('')
 const searchKeyword = ref('')
 
+// 计算涨跌幅
+const calcChangeRate = (stock: Stock): number => {
+  if (!stock.pre_close_price || stock.pre_close_price === 0) return 0
+  return ((stock.close_price - stock.pre_close_price) / stock.pre_close_price) * 100
+}
+
 // 统计计算
-const upCount = computed(() => stocks.value.filter(s => s.change_rate > 0).length)
-const downCount = computed(() => stocks.value.filter(s => s.change_rate < 0).length)
+const upCount = computed(() => stocks.value.filter(s => calcChangeRate(s) > 0).length)
+const downCount = computed(() => stocks.value.filter(s => calcChangeRate(s) < 0).length)
 
 // 格式化函数
 const formatPrice = (val?: number) => val ? val.toFixed(2) : '--'
-const formatChangeRate = (val: number) => val.toFixed(2)
 const formatVolume = (val: number) => {
   if (val >= 100000000) return (val / 100000000).toFixed(2) + '亿'
   if (val >= 10000) return (val / 10000).toFixed(2) + '万'
@@ -245,6 +256,8 @@ onMounted(() => {
 
 <style lang="scss" scoped>
 .stocks-view {
+  height: 100%;
+  
   .el-table {
     cursor: pointer;
   }

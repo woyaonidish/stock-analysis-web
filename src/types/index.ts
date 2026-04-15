@@ -5,19 +5,38 @@ export interface ApiResponse<T> {
   data: T
 }
 
-// 股票数据
+// 股票数据（含五档买卖盘）
 export interface Stock {
   code: string
   name: string
-  new_price: number
-  change_rate: number
-  change_amount?: number
-  volume: number
-  amount: number
   open_price?: number
+  close_price: number
   high_price?: number
   low_price?: number
   pre_close_price?: number
+  volume: number
+  amount: number
+  // 五档买卖盘
+  bid1?: number
+  bid1_vol?: number
+  bid2?: number
+  bid2_vol?: number
+  bid3?: number
+  bid3_vol?: number
+  bid4?: number
+  bid4_vol?: number
+  bid5?: number
+  bid5_vol?: number
+  ask1?: number
+  ask1_vol?: number
+  ask2?: number
+  ask2_vol?: number
+  ask3?: number
+  ask3_vol?: number
+  ask4?: number
+  ask4_vol?: number
+  ask5?: number
+  ask5_vol?: number
   date?: string
 }
 
@@ -30,10 +49,6 @@ export interface StockHist {
   low: number
   volume: number
   amount: number
-  amplitude?: number
-  change_pct?: number
-  change_amount?: number
-  turnover?: number
 }
 
 // 分时数据
@@ -47,48 +62,58 @@ export interface StockMinData {
   amount: number
 }
 
-// ETF数据
-export interface ETF {
+// 指数数据
+export interface Index {
   code: string
   name: string
-  new_price: number
-  change_rate: number
-  change_amount?: number
-  volume: number
-  amount: number
-  date?: string
-}
-
-// ETF历史数据
-export interface ETFHist {
   date: string
-  open: number
-  close: number
-  high: number
-  low: number
+  open_price: number
+  close_price: number
+  high_price: number
+  low_price: number
+  pre_close: number
+  change_rate: number
   volume: number
   amount: number
 }
 
-// 资金流向 - 个股
-export interface FundFlowIndividual {
-  代码: string
-  名称: string
-  最新价: number
-  今日涨跌幅: number
-  今日主力净流入_净额?: number
-  今日主力净流入_净占比?: number
-  今日超大单净流入_净额?: number
-  今日大单净流入_净额?: number
+// 财务数据
+export interface Financial {
+  code: string
+  report_date: string
+  eps?: number           // 每股收益
+  eps_deducted?: number  // 扣非每股收益
+  bvps?: number          // 每股净资产
+  cfps?: number          // 每股现金流
+  roe?: number           // 净资产收益率
+  roe_weighted?: number  // 加权净资产收益率
+  net_profit_margin?: number     // 净利率
+  gross_profit_margin?: number   // 毛利率
+  revenue_growth?: number        // 营收增长率
+  net_profit_growth?: number     // 净利润增长率
+  debt_ratio?: number            // 资产负债率
+  current_ratio?: number         // 流动比率
+  quick_ratio?: number           // 速动比率
+  revenue?: number               // 营业收入
+  net_profit?: number            // 净利润
+  total_assets?: number          // 总资产
+  net_assets?: number            // 净资产
+  total_shares?: number          // 总股本
 }
 
-// 资金流向 - 板块
-export interface FundFlowSector {
-  名称: string
-  今日涨跌幅: number
-  今日主力净流入_净额?: number
-  今日主力净流入_净占比?: number
-  今日主力净流入最大股?: string
+// K线形态数据
+export interface Pattern {
+  code: string
+  date: string
+  patterns: Record<string, number>  // 形态名称和强度值
+}
+
+// 形态信号
+export interface PatternSignal {
+  code: string
+  date: string
+  pattern: string
+  signal: 'buy' | 'sell'
 }
 
 // 技术指标
@@ -102,13 +127,8 @@ export interface Indicator {
   kdjd?: number
   kdjj?: number
   rsi?: number
-  rsi_6?: number
-  rsi_12?: number
-  rsi_24?: number
   atr?: number
   cci?: number
-  wr_6?: number
-  wr_10?: number
 }
 
 // 策略类型

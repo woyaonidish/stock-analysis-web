@@ -91,11 +91,6 @@
             </span>
           </template>
         </el-table-column>
-        <el-table-column prop="rsi_6" label="RSI6" width="90">
-          <template #default="{ row }">
-            {{ row.rsi_6?.toFixed(2) || '--' }}
-          </template>
-        </el-table-column>
         <el-table-column prop="atr" label="ATR" width="90">
           <template #default="{ row }">
             {{ row.atr?.toFixed(3) || '--' }}
@@ -104,11 +99,6 @@
         <el-table-column prop="cci" label="CCI" width="90">
           <template #default="{ row }">
             {{ row.cci?.toFixed(2) || '--' }}
-          </template>
-        </el-table-column>
-        <el-table-column prop="wr_6" label="WR6" width="90">
-          <template #default="{ row }">
-            {{ row.wr_6?.toFixed(2) || '--' }}
           </template>
         </el-table-column>
       </el-table>

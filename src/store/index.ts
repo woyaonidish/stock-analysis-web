@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import type { Stock, ETF, StrategyType, Indicator } from '@/types'
+import type { Stock, StrategyType, Indicator } from '@/types'
 
 export const useStockStore = defineStore('stock', () => {
   const stocks = ref<Stock[]>([])
@@ -25,26 +25,6 @@ export const useStockStore = defineStore('stock', () => {
     loading,
     setStocks,
     setCurrentStock,
-    setLoading
-  }
-})
-
-export const useETFStore = defineStore('etf', () => {
-  const etfs = ref<ETF[]>([])
-  const loading = ref(false)
-
-  const setETFs = (data: ETF[]) => {
-    etfs.value = data
-  }
-
-  const setLoading = (val: boolean) => {
-    loading.value = val
-  }
-
-  return {
-    etfs,
-    loading,
-    setETFs,
     setLoading
   }
 })

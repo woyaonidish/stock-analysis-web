@@ -13,10 +13,10 @@
       <el-row :gutter="20" v-if="stock">
         <el-col :span="6">
           <el-card shadow="hover">
-            <el-statistic title="最新价" :value="stock.new_price" :precision="2">
+            <el-statistic title="现价" :value="stock.close_price" :precision="2">
               <template #suffix>
-                <span :class="getChangeClass(stock.change_rate)">
-                  {{ stock.change_rate > 0 ? '↑' : stock.change_rate < 0 ? '↓' : '' }}
+                <span :class="getChangeClass(calcChangeRate())">
+                  {{ calcChangeRate() > 0 ? '↑' : calcChangeRate() < 0 ? '↓' : '' }}
                 </span>
               </template>
             </el-statistic>
@@ -24,7 +24,7 @@
         </el-col>
         <el-col :span="6">
           <el-card shadow="hover">
-            <el-statistic title="涨跌幅" :value="stock.change_rate" :precision="2">
+            <el-statistic title="涨跌幅" :value="calcChangeRate()" :precision="2">
               <template #suffix>
                 <span>%</span>
               </template>
@@ -67,6 +67,40 @@
       </el-row>
     </div>
 
+    <!-- 五档买卖盘 -->
+    <div class="page-card" v-if="stock && stock.bid1">
+      <div class="page-title">
+        <el-icon><ShoppingCart /></el-icon>
+        五档买卖盘
+      </div>
+      <el-row :gutter="20">
+        <el-col :span="12">
+          <div class="bid-panel">
+            <h4>买入档位</h4>
+            <el-table :data="bidData" size="small">
+              <el-table-column prop="level" label="档位" width="60" />
+              <el-table-column prop="price" label="价格" width="80">
+                <template #default="{ row }">{{ row.price.toFixed(2) }}</template>
+              </el-table-column>
+              <el-table-column prop="volume" label="量" width="100" />
+            </el-table>
+          </div>
+        </el-col>
+        <el-col :span="12">
+          <div class="ask-panel">
+            <h4>卖出档位</h4>
+            <el-table :data="askData" size="small">
+              <el-table-column prop="level" label="档位" width="60" />
+              <el-table-column prop="price" label="价格" width="80">
+                <template #default="{ row }">{{ row.price.toFixed(2) }}</template>
+              </el-table-column>
+              <el-table-column prop="volume" label="量" width="100" />
+            </el-table>
+          </div>
+        </el-col>
+      </el-row>
+    </div>
+
     <!-- K线图 -->
     <div class="page-card">
       <div class="page-title">
@@ -79,11 +113,6 @@
           <el-radio-button value="weekly">周线</el-radio-button>
           <el-radio-button value="monthly">月线</el-radio-button>
         </el-radio-group>
-        <el-select v-model="adjust" placeholder="复权类型" @change="loadHistData" style="margin-left: 20px; width: 120px">
-          <el-option value="" label="不复权" />
-          <el-option value="qfq" label="前复权" />
-          <el-option value="hfq" label="后复权" />
-        </el-select>
       </div>
       <div ref="chartRef" style="height: 400px; margin-top: 20px"></div>
     </div>
@@ -100,11 +129,7 @@
           <template #default="{ row }">{{ row.open.toFixed(2) }}</template>
         </el-table-column>
         <el-table-column prop="close" label="收盘" width="100">
-          <template #default="{ row }">
-            <span :class="getChangeClass(row.change_pct || 0)">
-              {{ row.close.toFixed(2) }}
-            </span>
-          </template>
+          <template #default="{ row }">{{ row.close.toFixed(2) }}</template>
         </el-table-column>
         <el-table-column prop="high" label="最高" width="100">
           <template #default="{ row }">{{ row.high.toFixed(2) }}</template>
@@ -118,23 +143,13 @@
         <el-table-column prop="amount" label="成交额" width="140">
           <template #default="{ row }">{{ formatAmount(row.amount) }}</template>
         </el-table-column>
-        <el-table-column prop="change_pct" label="涨跌幅(%)" width="100">
-          <template #default="{ row }">
-            <span :class="getChangeClass(row.change_pct || 0)">
-              {{ (row.change_pct || 0).toFixed(2) }}%
-            </span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="turnover" label="换手率(%)" width="100">
-          <template #default="{ row }">{{ (row.turnover || 0).toFixed(2) }}</template>
-        </el-table-column>
       </el-table>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import * as echarts from 'echarts'
@@ -148,9 +163,37 @@ const code = route.params.code as string
 const stock = ref<Stock | null>(null)
 const histData = ref<StockHist[]>([])
 const period = ref('daily')
-const adjust = ref('')
 const chartRef = ref<HTMLElement | null>(null)
 let chartInstance: echarts.ECharts | null = null
+
+// 计算涨跌幅
+const calcChangeRate = (): number => {
+  if (!stock.value || !stock.value.pre_close_price || stock.value.pre_close_price === 0) return 0
+  return ((stock.value.close_price - stock.value.pre_close_price) / stock.value.pre_close_price) * 100
+}
+
+// 五档买卖盘数据
+const bidData = computed(() => {
+  if (!stock.value) return []
+  return [
+    { level: '买1', price: stock.value.bid1 || 0, volume: stock.value.bid1_vol || 0 },
+    { level: '买2', price: stock.value.bid2 || 0, volume: stock.value.bid2_vol || 0 },
+    { level: '买3', price: stock.value.bid3 || 0, volume: stock.value.bid3_vol || 0 },
+    { level: '买4', price: stock.value.bid4 || 0, volume: stock.value.bid4_vol || 0 },
+    { level: '买5', price: stock.value.bid5 || 0, volume: stock.value.bid5_vol || 0 }
+  ].filter(d => d.price > 0)
+})
+
+const askData = computed(() => {
+  if (!stock.value) return []
+  return [
+    { level: '卖1', price: stock.value.ask1 || 0, volume: stock.value.ask1_vol || 0 },
+    { level: '卖2', price: stock.value.ask2 || 0, volume: stock.value.ask2_vol || 0 },
+    { level: '卖3', price: stock.value.ask3 || 0, volume: stock.value.ask3_vol || 0 },
+    { level: '卖4', price: stock.value.ask4 || 0, volume: stock.value.ask4_vol || 0 },
+    { level: '卖5', price: stock.value.ask5 || 0, volume: stock.value.ask5_vol || 0 }
+  ].filter(d => d.price > 0)
+})
 
 const goBack = () => {
   router.push('/stocks')
@@ -198,8 +241,7 @@ const loadHistData = async () => {
     const res = await getStockHist(code, {
       start_date: formatDate(startDate, 'YYYYMMDD'),
       end_date: formatDate(endDate, 'YYYYMMDD'),
-      period: period.value,
-      adjust: adjust.value
+      period: period.value
     })
     
     if (res.code === 0) {
@@ -311,6 +353,25 @@ onUnmounted(() => {
   .chart-controls {
     display: flex;
     align-items: center;
+  }
+
+  .bid-panel, .ask-panel {
+    h4 {
+      margin-bottom: 10px;
+      color: #606266;
+    }
+  }
+
+  .bid-panel {
+    h4 {
+      color: #67c23a;
+    }
+  }
+
+  .ask-panel {
+    h4 {
+      color: #f56c6c;
+    }
   }
 }
 </style>

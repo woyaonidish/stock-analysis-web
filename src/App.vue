@@ -18,17 +18,21 @@
             <el-icon><DataLine /></el-icon>
             <span>股票数据</span>
           </el-menu-item>
-          <el-menu-item index="/etf">
-            <el-icon><PieChart /></el-icon>
-            <span>ETF数据</span>
+          <el-menu-item index="/index">
+            <el-icon><Promotion /></el-icon>
+            <span>指数行情</span>
           </el-menu-item>
-          <el-menu-item index="/fund-flow">
-            <el-icon><Money /></el-icon>
-            <span>资金流向</span>
+          <el-menu-item index="/financial">
+            <el-icon><Document /></el-icon>
+            <span>财务数据</span>
           </el-menu-item>
           <el-menu-item index="/indicators">
             <el-icon><Odometer /></el-icon>
             <span>技术指标</span>
+          </el-menu-item>
+          <el-menu-item index="/patterns">
+            <el-icon><Connection /></el-icon>
+            <span>K线形态</span>
           </el-menu-item>
           <el-menu-item index="/strategy">
             <el-icon><Aim /></el-icon>

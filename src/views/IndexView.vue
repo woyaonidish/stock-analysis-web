@@ -1,9 +1,9 @@
 <template>
-  <div class="etf-view">
+  <div class="index-view">
     <div class="page-card">
       <div class="page-title">
-        <el-icon><PieChart /></el-icon>
-        ETF数据
+        <el-icon><Promotion /></el-icon>
+        指数行情
       </div>
 
       <!-- 搜索栏 -->
@@ -16,7 +16,7 @@
           value-format="YYYY-MM-DD"
           :clearable="true"
         />
-        <el-button type="primary" @click="loadETFs">
+        <el-button type="primary" @click="loadIndexList">
           <el-icon><Search /></el-icon>
           查询
         </el-button>
@@ -26,35 +26,14 @@
         </el-button>
       </div>
 
-      <!-- 数据统计 -->
-      <el-row :gutter="16" style="margin-bottom: 20px">
-        <el-col :span="4">
-          <el-statistic title="ETF总数" :value="etfs.length" />
-        </el-col>
-        <el-col :span="4">
-          <el-statistic title="上涨数量" :value="upCount">
-            <template #suffix>
-              <span style="color: #f56c6c">↑</span>
-            </template>
-          </el-statistic>
-        </el-col>
-        <el-col :span="4">
-          <el-statistic title="下跌数量" :value="downCount">
-            <template #suffix>
-              <span style="color: #67c23a">↓</span>
-            </template>
-          </el-statistic>
-        </el-col>
-      </el-row>
-
-      <!-- ETF列表 -->
-      <el-table :data="etfs" v-loading="loading" stripe height="calc(100vh - 280px)">
+      <!-- 指数列表 -->
+      <el-table :data="indexList" v-loading="loading" stripe>
         <el-table-column prop="code" label="代码" width="100" />
         <el-table-column prop="name" label="名称" width="150" />
-        <el-table-column prop="new_price" label="最新价" width="100">
+        <el-table-column prop="close_price" label="最新价" width="120">
           <template #default="{ row }">
             <span :class="getChangeClass(row.change_rate)">
-              {{ row.new_price.toFixed(3) }}
+              {{ row.close_price.toFixed(2) }}
             </span>
           </template>
         </el-table-column>
@@ -65,22 +44,23 @@
             </span>
           </template>
         </el-table-column>
-        <el-table-column prop="change_amount" label="涨跌额" width="100">
-          <template #default="{ row }">
-            <span :class="getChangeClass(row.change_rate)">
-              {{ (row.change_amount || 0).toFixed(3) }}
-            </span>
-          </template>
+        <el-table-column prop="open_price" label="开盘" width="120">
+          <template #default="{ row }">{{ row.open_price.toFixed(2) }}</template>
+        </el-table-column>
+        <el-table-column prop="high_price" label="最高" width="120">
+          <template #default="{ row }">{{ row.high_price.toFixed(2) }}</template>
+        </el-table-column>
+        <el-table-column prop="low_price" label="最低" width="120">
+          <template #default="{ row }">{{ row.low_price.toFixed(2) }}</template>
+        </el-table-column>
+        <el-table-column prop="pre_close" label="昨收" width="120">
+          <template #default="{ row }">{{ row.pre_close.toFixed(2) }}</template>
         </el-table-column>
         <el-table-column prop="volume" label="成交量" width="120">
-          <template #default="{ row }">
-            {{ formatVolume(row.volume) }}
-          </template>
+          <template #default="{ row }">{{ formatVolume(row.volume) }}</template>
         </el-table-column>
         <el-table-column prop="amount" label="成交额" width="140">
-          <template #default="{ row }">
-            {{ formatAmount(row.amount) }}
-          </template>
+          <template #default="{ row }">{{ formatAmount(row.amount) }}</template>
         </el-table-column>
       </el-table>
     </div>
@@ -88,17 +68,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { getETFList, fetchETFData } from '@/api'
-import type { ETF } from '@/types'
+import { getIndexList, fetchIndexData } from '@/api'
+import type { Index } from '@/types'
 
-const etfs = ref<ETF[]>([])
+const indexList = ref<Index[]>([])
 const loading = ref(false)
 const tradeDate = ref<string>('')
-
-const upCount = computed(() => etfs.value.filter(e => e.change_rate > 0).length)
-const downCount = computed(() => etfs.value.filter(e => e.change_rate < 0).length)
 
 const getChangeClass = (rate: number) => {
   if (rate > 0) return 'up'
@@ -118,17 +95,17 @@ const formatAmount = (val: number) => {
   return val.toFixed(2)
 }
 
-const loadETFs = async () => {
+const loadIndexList = async () => {
   loading.value = true
   try {
-    const res = await getETFList(tradeDate.value)
+    const res = await getIndexList(tradeDate.value)
     if (res.code === 0) {
-      etfs.value = res.data
+      indexList.value = res.data
     } else {
       ElMessage.error(res.message)
     }
   } catch (error) {
-    ElMessage.error('加载ETF数据失败')
+    ElMessage.error('加载指数数据失败')
   } finally {
     loading.value = false
   }
@@ -137,10 +114,10 @@ const loadETFs = async () => {
 const handleFetchData = async () => {
   loading.value = true
   try {
-    const res = await fetchETFData(tradeDate.value)
+    const res = await fetchIndexData(tradeDate.value)
     if (res.code === 0) {
       ElMessage.success(`成功抓取 ${res.data.count} 条数据`)
-      loadETFs()
+      loadIndexList()
     } else {
       ElMessage.error(res.message)
     }
@@ -152,12 +129,12 @@ const handleFetchData = async () => {
 }
 
 onMounted(() => {
-  loadETFs()
+  loadIndexList()
 })
 </script>
 
 <style lang="scss" scoped>
-.etf-view {
+.index-view {
   height: 100%;
 }
 </style>

@@ -16,19 +16,24 @@ const routes = [
     component: () => import('@/views/StockDetailView.vue')
   },
   {
-    path: '/etf',
-    name: 'ETF',
-    component: () => import('@/views/ETFView.vue')
+    path: '/index',
+    name: 'Index',
+    component: () => import('@/views/IndexView.vue')
   },
   {
-    path: '/fund-flow',
-    name: 'FundFlow',
-    component: () => import('@/views/FundFlowView.vue')
+    path: '/financial',
+    name: 'Financial',
+    component: () => import('@/views/FinancialView.vue')
   },
   {
     path: '/indicators',
     name: 'Indicators',
     component: () => import('@/views/IndicatorsView.vue')
+  },
+  {
+    path: '/patterns',
+    name: 'Patterns',
+    component: () => import('@/views/PatternsView.vue')
   },
   {
     path: '/strategy',

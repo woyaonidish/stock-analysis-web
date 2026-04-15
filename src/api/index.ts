@@ -1,5 +1,5 @@
 import axios from 'axios'
-import type { ApiResponse, Stock, StockHist, StockMinData, ETF, ETFHist, FundFlowIndividual, FundFlowSector, Indicator, StrategyType, StrategyResult, BacktestResult, BacktestRequest } from '@/types'
+import type { ApiResponse, Stock, StockHist, StockMinData, Index, Financial, Pattern, PatternSignal, Indicator, StrategyType, StrategyResult, BacktestResult, BacktestRequest } from '@/types'
 
 const api = axios.create({
   baseURL: '/api',
@@ -11,8 +11,8 @@ const api = axios.create({
 
 // 响应拦截器
 api.interceptors.response.use(
-  response => response.data,
-  error => {
+  (response: any) => response.data,
+  (error: any) => {
     console.error('API Error:', error)
     return Promise.reject(error)
   }
@@ -35,7 +35,6 @@ export const getStockHist = (code: string, params?: {
   start_date?: string
   end_date?: string
   period?: string
-  adjust?: string
 }): Promise<ApiResponse<StockHist[]>> => {
   return api.get(`/stocks/${code}/hist`, { params })
 }
@@ -43,9 +42,6 @@ export const getStockHist = (code: string, params?: {
 // 获取分时数据
 export const getStockMin = (code: string, params?: {
   period?: string
-  start_date?: string
-  end_date?: string
-  adjust?: string
 }): Promise<ApiResponse<StockMinData[]>> => {
   return api.get(`/stocks/${code}/min`, { params })
 }
@@ -60,51 +56,38 @@ export const fetchDailyData = (tradeDate?: string): Promise<ApiResponse<{ count:
   return api.post('/stocks/fetch', null, { params: { trade_date: tradeDate } })
 }
 
-// ==================== ETF接口 ====================
+// ==================== 指数接口 ====================
 
-// 获取ETF列表
-export const getETFList = (tradeDate?: string): Promise<ApiResponse<ETF[]>> => {
-  return api.get('/etf/list', { params: { trade_date: tradeDate } })
+// 获取指数列表
+export const getIndexList = (tradeDate?: string): Promise<ApiResponse<Index[]>> => {
+  return api.get('/index/list', { params: { trade_date: tradeDate } })
 }
 
-// 获取ETF详情
-export const getETFDetail = (code: string, tradeDate?: string): Promise<ApiResponse<ETF>> => {
-  return api.get(`/etf/${code}`, { params: { trade_date: tradeDate } })
+// 获取指数详情
+export const getIndexDetail = (code: string, tradeDate?: string): Promise<ApiResponse<Index>> => {
+  return api.get(`/index/${code}`, { params: { trade_date: tradeDate } })
 }
 
-// 获取ETF历史数据
-export const getETFHist = (code: string, params?: {
-  start_date?: string
-  end_date?: string
-  period?: string
-  adjust?: string
-}): Promise<ApiResponse<ETFHist[]>> => {
-  return api.get(`/etf/${code}/hist`, { params })
+// 抓取指数数据
+export const fetchIndexData = (tradeDate?: string): Promise<ApiResponse<{ count: number }>> => {
+  return api.post('/index/fetch', null, { params: { trade_date: tradeDate } })
 }
 
-// 抓取ETF数据
-export const fetchETFData = (tradeDate?: string): Promise<ApiResponse<{ count: number }>> => {
-  return api.post('/etf/fetch', null, { params: { trade_date: tradeDate } })
+// ==================== 财务数据接口 ====================
+
+// 获取股票财务数据
+export const getFinancial = (code: string, reportDate?: string): Promise<ApiResponse<Financial>> => {
+  return api.get(`/financial/${code}`, { params: { report_date: reportDate } })
 }
 
-// ==================== 资金流向接口 ====================
-
-// 获取个股资金流向
-export const getIndividualFundFlow = (indicator?: string): Promise<ApiResponse<FundFlowIndividual[]>> => {
-  return api.get('/fund-flow/individual', { params: { indicator } })
+// 获取历史财务数据
+export const getFinancialHistory = (code: string, limit?: number): Promise<ApiResponse<Financial[]>> => {
+  return api.get(`/financial/${code}/history`, { params: { limit } })
 }
 
-// 获取板块资金流向
-export const getSectorFundFlow = (params?: {
-  indicator?: string
-  sector_type?: string
-}): Promise<ApiResponse<FundFlowSector[]>> => {
-  return api.get('/fund-flow/sector', { params })
-}
-
-// 抓取资金流向数据
-export const fetchFundFlowData = (tradeDate?: string): Promise<ApiResponse<Record<string, number>>> => {
-  return api.post('/fund-flow/fetch', null, { params: { trade_date: tradeDate } })
+// 获取最新报告期
+export const getLatestReportDate = (): Promise<ApiResponse<{ report_date: string }>> => {
+  return api.get('/financial/latest-report-date')
 }
 
 // ==================== 技术指标接口 ====================
@@ -132,6 +115,38 @@ export const getSellSignals = (tradeDate?: string): Promise<ApiResponse<{ code: 
 // 计算并保存指标
 export const calculateIndicator = (code: string, tradeDate?: string): Promise<ApiResponse<{ code: string }>> => {
   return api.post(`/indicators/calculate/${code}`, null, { params: { trade_date: tradeDate } })
+}
+
+// ==================== K线形态接口 ====================
+
+// 获取股票形态
+export const getPattern = (code: string, tradeDate?: string): Promise<ApiResponse<Pattern>> => {
+  return api.get(`/patterns/${code}`, { params: { trade_date: tradeDate } })
+}
+
+// 获取形态列表
+export const getPatternList = (tradeDate?: string): Promise<ApiResponse<Pattern[]>> => {
+  return api.get('/patterns/list', { params: { trade_date: tradeDate } })
+}
+
+// 获取形态买入信号
+export const getPatternBuySignals = (tradeDate?: string): Promise<ApiResponse<PatternSignal[]>> => {
+  return api.get('/patterns/signals/buy', { params: { trade_date: tradeDate } })
+}
+
+// 获取形态卖出信号
+export const getPatternSellSignals = (tradeDate?: string): Promise<ApiResponse<PatternSignal[]>> => {
+  return api.get('/patterns/signals/sell', { params: { trade_date: tradeDate } })
+}
+
+// 计算形态
+export const calculatePattern = (code: string, tradeDate?: string): Promise<ApiResponse<{ code: string }>> => {
+  return api.post(`/patterns/calculate/${code}`, null, { params: { trade_date: tradeDate } })
+}
+
+// 批量计算形态
+export const calculateAllPatterns = (tradeDate?: string): Promise<ApiResponse<{ count: number }>> => {
+  return api.post('/patterns/calculate-all', null, { params: { trade_date: tradeDate } })
 }
 
 // ==================== 策略选股接口 ====================
